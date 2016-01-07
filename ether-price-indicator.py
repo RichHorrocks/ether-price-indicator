@@ -6,9 +6,10 @@
 import sys
 import gtk
 import appindicator
-import urllib2
+import requests
 import json
 import os
+import ssl
 
 from os.path import expanduser
 HOME = expanduser("~")
@@ -21,7 +22,6 @@ class EtherPriceIndicator:
     ETHERICON = os.path.abspath(HOME+"/.local/share/applications/ethericon.png")
     APPDIR = HOME+"/.local/share/applications/"
     APPNAME = 'Ether Indicator';VERSION = '1.0'
-    ETHMODE = True; ETHInit = False;
 
     def __init__(self):
         self.initFromFile()
@@ -38,37 +38,22 @@ class EtherPriceIndicator:
 	# setup gtk menus to toggle display of data
     def menu_setup(self):
         self.menu = gtk.Menu()
-        self.BTCtickers = None
-        self.btceBTC = gtk.RadioMenuItem(self.BTCtickers,"BTC-E"); 
-        self.btceBTC.connect("activate", lambda x: self.toggleBTCdisplay("btce")); 
-        self.btceBTC.show()
-        self.BTCtickers = self.btceBTC
-        self.mtgoxBTC = gtk.RadioMenuItem(self.BTCtickers,"MtGox"); 
-        self.mtgoxBTC.connect("activate", lambda x: self.toggleBTCdisplay("mtgox")); 
-        self.mtgoxBTC.show()
-        self.BTCtickers = self.mtgoxBTC
-
-        self.defSet = gtk.MenuItem("Choose exchange : "); self.defSet.show()
-        self.menu.append(self.defSet)
-        self.menu.append(self.mtgoxBTC); 
-        self.menu.append(self.btceBTC) 
-
         self.setRefreshMenu(self.menu)
-
         self.updateStatsETH()
         
-        self.about = gtk.MenuItem("About"); 
-        self.about.connect("activate",self.menu_about_response);
+        # Munu options.
+        self.about = gtk.MenuItem("About") 
+        self.about.connect("activate",self.menu_about_response)
         self.about.show()
         self.menu.append(self.about)
-        self.quit_item = gtk.MenuItem("Quit Indicator"); 
-        self.quit_item.connect("activate", self.quit); 
+        self.quit_item = gtk.MenuItem("Quit Indicator")
+        self.quit_item.connect("activate", self.quit)
         self.quit_item.show()
         self.menu.append(self.quit_item)
 
     def setRefreshMenu(self,menuIn):
         refreshmenu = gtk.Menu()
-        refMenu =gtk.MenuItem("Set refresh rate :")
+        refMenu = gtk.MenuItem("Set refresh rate :")
         refMenu.set_submenu(refreshmenu)
 
         self.refreshRates = None
@@ -101,43 +86,37 @@ class EtherPriceIndicator:
 	# build string to be used by indicator and update the display label
     def updateStatsETH(self):
         dataOut = ""
-        priceNow = BAD_RETRIEVE
+        data = BAD_RETRIEVE
 
-        priceNow = self.getEtherChainData("")
-        if priceNow == BAD_RETRIEVE:
-            priceNow = "TempDown"
-        else:
-            priceNow = str(priceNow)+" USD"
-        if "mtgox" in self.exchange:
-            dataOut = dataOut + ' | ' if dataOut != "" else dataOut
-            dataOut = dataOut + "MtGox: "+priceNow
-        self.mtgoxBTC.set_label("MtGox| "+str(priceNow))
+        data = self.getEtherChainData()
+     #   if data == BAD_RETRIEVE:
+     #       priceNow = "TempDown"
+     #   else:
+     #       priceNow = str(priceNow)+" USD"
+     #   if "mtgox" in self.exchange:
+     #       dataOut = dataOut + ' | ' if dataOut != "" else dataOut
+     #       dataOut = dataOut + "MtGox: "+priceNow
+     #   self.mtgoxBTC.set_label("MtGox| "+str(priceNow))
 
-        priceNow = self.getBTCEDataUSD("")
-        if priceNow == BAD_RETRIEVE:
-            priceNow = "TempDown"
-        else:
-            priceNow = str(priceNow)+" USD"
-        if "btce" in self.exchange:
-            dataOut = dataOut + ' | ' if dataOut != "" else dataOut
-            dataOut = dataOut + "BTC-E: "+priceNow
-        self.btceBTC.set_label("BTC-E | "+str(priceNow))
-
-        self.ind.set_label(dataOut)
+     #   self.ind.set_label(dataOut)
         return True
 
     # get bter data using json
     def getEtherChainData(self):
-        lstBterprice = BAD_RETRIEVE
+        data = "foo"
         try :
-            web_page = urllib2.urlopen("https://etherchain.org/api/blocks/count").read()
-            data = json.loads(web_page)
-            lstBterprice = data['last']
-        except urllib2.HTTPError :
-            print("HTTPERROR!")
-        except urllib2.URLError :
-            print("URLERROR!")
-        return "{0:,.2f}".format(float(lstBterprice))
+            r = requests.get("https://btc-e.com/api/2/ltc_eur/ticker", verify=False)
+            #web_page = urllib2.urlopen("https://etherchain.org/api/blocks/count").read()
+            #web_page = urllib2.urlopen("http://www.bbc.co.uk/news").read()
+            #data = json.loads(web_page)
+            print r
+        except requests.exceptions.RequestException as e:    # This is the correct syntax
+            print e
+        #except urllib2.HTTPError as e:
+        #    print("HTTPERROR: ", e.code)
+        #except urllib2.URLError as e:
+        #    print("URLERROR: ", e.reason)
+        return data
 
 
     #############################################
@@ -152,8 +131,6 @@ class EtherPriceIndicator:
             file = open(SETTINGSFILE, 'w')
             file.write(os.getcwd()+'\n')
             file.write('10 \n')
-            file.write('bter \n')
-            file.write('True \n')
             file.close()
         f = open(SETTINGSFILE, 'r')
         lines = f.readlines()
@@ -163,33 +140,16 @@ class EtherPriceIndicator:
         print "App Directory : "+self.APPDIR
         print "Refresh rate:",int(lines[1]),"seconds"
         self.PING_FREQUENCY = int(lines[1])
-        print "BTC Exchange :",(lines[2].strip()),"   Display :",self.str2bool(lines[3].strip())
-        self.exchange = (lines[2].strip())
-        self.BTCMODE = self.str2bool(lines[3].strip())
-        print "LTC Exchange :",(lines[4].strip()),"   Display :",self.str2bool(lines[5].strip())
-        self.exchangeLTC = (lines[4].strip())
-        self.LTCMODE = self.str2bool(lines[5].strip())
-        print "NMC Exchange : ",(lines[6].strip()),"   Display :",self.str2bool(lines[7].strip())
-        self.exchangeNMC = (lines[6].strip())
-        self.NMCMODE = self.str2bool(lines[7].strip())
-        print "PPC Exchange : ",(lines[8].strip()),"   Display :",self.str2bool(lines[9].strip())
-        self.exchangePPC = (lines[8].strip())
-        self.PPCMODE = self.str2bool(lines[9].strip())
-        print "YAC Exchange : ",(lines[10].strip()),"   Display :",self.str2bool(lines[11].strip())
-        self.exchangeYAC = (lines[10].strip())
-        self.YACMODE = self.str2bool(lines[11].strip())
         f.close()
 
     def setAppDir(self,currDir):
-        self.YACICON = os.path.abspath(currDir+"/res/ethericon.png")
+        self.ETHERICON = os.path.abspath(currDir+"/res/ethericon.png")
         self.APPDIR = currDir
 
 	# utility function for settings file grab
     def str2bool(self,word):
         return word.lower() in ("yes", "true", "t", "1","ok")
 
-    def quit(self, widget, data=None):
-        gtk.main_quit()
 	# save settings at quit and kill indicator
     def quit(self, widget):
         try:
@@ -197,8 +157,6 @@ class EtherPriceIndicator:
             file = open(SETTINGSFILE, 'w')
             file.write(str(self.APPDIR)+'\n')
             file.write(str(self.PING_FREQUENCY)+'\n')
-            file.write(str(self.exchange)+'\n')
-            file.write(str(self.BTCMODE)+'\n')
             file.close()
         except IOError:
             print " ERROR WRITING QUIT STATE"
@@ -211,7 +169,7 @@ class EtherPriceIndicator:
         ad=gtk.AboutDialog()
         ad.set_name(self.APPNAME)
         ad.set_version(self.VERSION)
-        ad.set_comments("A bitcoin ticker indicator")
+        ad.set_comments("An Ethereum ticker indicator")
         ad.set_license(''+
         'This program is free software: you can redistribute it and/or modify it\n'+
         'under the terms of the GNU General Public License as published by the\n'+

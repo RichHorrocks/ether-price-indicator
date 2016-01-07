@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=Ether Indicator
+GenericName=Ether Indicator
+Comment=Ether Price Indicator
+Encoding=UTF-8
+Version=1.0
+
+Name[en_US]=EtherIndicatorExec=/home/richard/Projects/ether-price-indicator/ether-price-indicator.py
+Icon=/home/richard/Projects/ether-price-indicator/res/ethericon.png
+Categories=Internet;
+Type=Application
+Terminal=false
+X-Ayatana-Desktop-Shortcuts=Regular;
+Name[en_US]=Ether Indicator
+ 
