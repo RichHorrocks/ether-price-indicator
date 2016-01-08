@@ -1,26 +1,28 @@
 Ether-Price-Indicator
 ==========
-by 
-### RichHorrocks
 
-[Based of Crypto-Price-Indicator by jjb]
+[Based on Crypto-Price-Indicator by jjb]
+
+A Python-based Ubuntu indicator showing the current value of Ethereum's Ether currency, together with
+information about the latest block mined on Ethereum's blockchain.
+
+Values are sourced from www.etherchain.org using their public API. 
+
+The currency conversions available are:
+ * Ether, in USD
+ * Ether, in BTC
+ * Bitcoins, in ETH
+ * US dollars, in ETH
+
+Donations are welcome!
+
+BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
+ETH: To come...
 
 
 
-generalizes and combines old btc version originally written in jj9 repo and enhanced by RichHorrocks and Zapsoda (btcapicalls/setupfile maintainance for old btc version)  and ltc version in other jj9 repo. Added peercoin support by sahtor.
 
-if you feel the need to share some bitcoin thanks or love
-do so here. If you use this please credit it 
-
-send any donation tips to 
-
-BTC : 1ECXwPU9umqtsBAQesBW9981mx6sipPmyL
-
-LTC : LUJz8yaS4uL1zrzwARbA4CiMpAwbpUwWY6
-
-NMC : N1SKXkrcyhxVYwQGsbLTFMbGAgeqL2g9tZ
-
-How to setup
+Setup
 ------
 1) Download the archive and extract it to a directory of your choice.
 
@@ -48,8 +50,6 @@ This can be done by downloading using the download zip link on this page or the 
  
 Screencaps
 ------
-![ScreenShot](screenie1.png)
-![ScreenShot](screenie2.png)
 
 How to run from command line (If you setup using the default advanced install):
 ------

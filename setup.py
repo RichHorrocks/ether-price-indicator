@@ -109,7 +109,7 @@ else:
         print 'Error moving application desktop file.'
 
     #Ask to move file to startup
-    if 'y' in raw_input("Run on startup? (Y/N): ").lower().strip():
+    if 'y' in raw_input("Run on startup? [Y/n] ").lower().strip():
         if not os.path.exists(HOME+"/.config/autostart/"):
             subprocess.call(["mkdir", HOME+"/.config/autostart/"])
             print "Making folder:",HOME+"/.config/autostart/"
@@ -137,10 +137,10 @@ else:
         print "IO ERROR"
 
 
-    makeAlias = str(raw_input( "Make indicator alias for terminal (Input anything other than *yes* to skip alias setup):"))
-    if "yes" in makeAlias:
+    makeAlias = str(raw_input( "Make indicator alias for terminal? [y/N]"))
+    if "y" in makeAlias:
         try:
-            subprocess.call(["sudo", dirIn + "/setupAlias.sh",INDICATORFILE])
+            subprocess.call(["sudo", dirIn + "/setupAlias.sh", INDICATORFILE])
             print "---------------------------------"
             print "Indicator installed close terminal"
             print "To run script type: ether-indicator"
