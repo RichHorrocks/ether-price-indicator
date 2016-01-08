@@ -16,44 +16,47 @@ from ndg import httpsclient
 from os.path import expanduser
 
 HOME = expanduser("~")
-SETTINGSFILE = os.path.abspath(HOME+"/.local/share/applications/settingsEtherIndicator.dat")
+SETTINGSFILE = os.path.abspath(HOME + "/.local/share/applications/settingsEtherIndicator.dat")
 BAD_RETRIEVE = 0xDEADBEEF
+ICON = os.path.abspath(HOME + "/.local/share/applications/ethericon.png")
+APPDIR = HOME + "/.local/share/applications/"
+APPNAME = 'Ether Indicator';
+VERSION = '1.0'
 
 class EtherPriceIndicator:
-    PING_FREQUENCY = 10 # seconds
+    refresh_frequency = 3 # seconds
     EXCHANGE = 'usdeth'
-    ETHERICON = os.path.abspath(HOME + "/.local/share/applications/ethericon.png")
-    APPDIR = HOME + "/.local/share/applications/"
-    APPNAME = 'Ether Indicator';
-    VERSION = '1.0'
 
     def __init__(self):
-        self.initFromFile()
+        self.init_from_file()
         self.ind = appindicator.Indicator("ether-indicator", 
-                                          self.ETHERICON,
+                                          self.ICON,
                                           appindicator.CATEGORY_APPLICATION_STATUS)
         self.ind.set_status(appindicator.STATUS_ACTIVE)
         self.menu_setup()
         self.ind.set_menu(self.menu)
 
+
     def main(self):
-        self.updateStatsETH()
-        gtk.timeout_add(self.PING_FREQUENCY * 1000, self.updateStatsETH)
+        self.set_user_output()
+        gtk.timeout_add(self.refresh_frequency * 1000, self.set_user_output)
         gtk.main()
 
+    #
+    # Create the drop-down GTK menus.
+    #
     def menu_setup(self):
         self.menu = gtk.Menu()
         
-        # Create exchange sub-menu.
-        self.setExchangeMenu(self.menu)
-       # self.menu.SeparatorMenuItem()
+        # Create exchange sub-menu.        
+        self.set_exchange_menu(self.menu)
 
         # Create refresh rate sub-menu.
-        self.setRefreshMenu(self.menu)
+        self.set_refresh_menu(self.menu)
         
-        # Add general munu options.
+        # Add general munu options at the bottom.
         self.about = gtk.MenuItem("About") 
-        self.about.connect("activate",self.menu_about_response)
+        self.about.connect("activate", self.menu_about_response)
         self.about.show()
         self.menu.append(self.about)
         self.quit_item = gtk.MenuItem("Quit Indicator")
@@ -61,26 +64,30 @@ class EtherPriceIndicator:
         self.quit_item.show()
         self.menu.append(self.quit_item)
 
-    def setExchangeMenu(self, menuIn):
+    #
+    # Create the menu for controlling what exchange mechanism to use.
+    # TODO: Find some way to incorporate this into a loop.
+    #
+    def set_exchange_menu(self, menuIn):
         exchangeMenu = gtk.Menu()
         exMenu = gtk.MenuItem("Set exchange:")
         exMenu.set_submenu(exchangeMenu)
         
         self.ETHtickers = None
         menuUSDETH = gtk.RadioMenuItem(self.ETHtickers,"USD / ETH"); 
-        menuUSDETH.connect("activate", lambda x: self.toggleETHdisplay("usdeth")); 
+        menuUSDETH.connect("activate", lambda x: self.set_exchange("usdeth")); 
         menuUSDETH.show()        
         self.ETHtickers = menuUSDETH;
         menuBTCETH = gtk.RadioMenuItem(self.ETHtickers,"BTC / ETH"); 
-        menuBTCETH.connect("activate", lambda x: self.toggleETHdisplay("btceth")); 
+        menuBTCETH.connect("activate", lambda x: self.set_exchange("btceth")); 
         menuBTCETH.show()
         self.ETHtickers = menuBTCETH;
         menuETHUSD = gtk.RadioMenuItem(self.ETHtickers,"ETH / USD"); 
-        menuETHUSD.connect("activate", lambda x: self.toggleETHdisplay("ethusd")); 
+        menuETHUSD.connect("activate", lambda x: self.set_exchange("ethusd")); 
         menuETHUSD.show()
         self.ETHtickers = menuETHUSD;
         menuETHBTC = gtk.RadioMenuItem(self.ETHtickers,"ETH / BTC"); 
-        menuETHBTC.connect("activate", lambda x: self.toggleETHdisplay("ethbtc")); 
+        menuETHBTC.connect("activate", lambda x: self.set_exchange("ethbtc")); 
         menuETHBTC.show()
         self.ETHtickers = menuETHBTC;
 
@@ -92,26 +99,30 @@ class EtherPriceIndicator:
         exchangeMenu.show()
         menuIn.append(exMenu)
 
-    def setRefreshMenu(self, menuIn):
+    #
+    # Create the menu for controlling how often the data is refreshed.
+    # TODO: Find some way to incorporate this into a loop.
+    #
+    def set_refresh_menu(self, menuIn):
         refreshmenu = gtk.Menu()
         refMenu = gtk.MenuItem("Set refresh rate:")
         refMenu.set_submenu(refreshmenu)
 
         self.refreshRates = None
         menuRefresh1 = gtk.RadioMenuItem(self.refreshRates,"30s"); 
-        menuRefresh1.connect("activate",lambda x: self.setPing(30)); 
+        menuRefresh1.connect("activate",lambda x: self.set_refresh(30)); 
         menuRefresh1.show()
         self.refreshRates = menuRefresh1
         menuRefresh2 = gtk.RadioMenuItem(self.refreshRates,"1m"); 
-        menuRefresh2.connect("activate",lambda x: self.setPing(60)); 
+        menuRefresh2.connect("activate",lambda x: self.set_refresh(60)); 
         menuRefresh2.show()
         self.refreshRates = menuRefresh2
         menuRefresh3 = gtk.RadioMenuItem(self.refreshRates,"5m"); 
-        menuRefresh3.connect("activate",lambda x: self.setPing(300)); 
+        menuRefresh3.connect("activate",lambda x: self.set_refresh(300)); 
         menuRefresh3.show()
         self.refreshRates = menuRefresh3
         menuRefresh4 = gtk.RadioMenuItem(self.refreshRates,"10m"); 
-        menuRefresh4.connect("activate",lambda x: self.setPing(600)); 
+        menuRefresh4.connect("activate",lambda x: self.set_refresh(600)); 
         menuRefresh4.show()
         self.refreshRates = menuRefresh4
 
@@ -123,65 +134,99 @@ class EtherPriceIndicator:
         refreshmenu.show()
         menuIn.append(refMenu)
 
-    def setPing(self, newTime):
-        self.PING_FREQUENCY = newTime
+    #
+    # Accessory function for setting the refresh frequency.
+    #
+    def set_refresh(self, newTime):
+        self.refresh_frequency = newTime
 
-    def toggleETHdisplay(self, exch):
+    #
+    # Accessory function for setting the exchange mechanism.
+    #
+    def set_exchange(self, exch):
         self.EXCHANGE = exch
-
-    def updateStatsETH(self):
-        dataOut = ""
+        
+    #
+    # Get the data by calling the external API.
+    #
+    def get_api_data(self):
         data = BAD_RETRIEVE
-
-        data = self.getEtherChainData()
-        if data == BAD_RETRIEVE or data["status"] != 1:
-            dataOut = "TempDown"
-        else:
-            dataOut = {
-               'usdeth': '$ ' + str(data['data']['price']['usd']),
-               'btceth': u'\u0243' + str(data['data']['price']['btc']),
-               'ethusd': u'\u039E' + str(1 / data['data']['price']['usd']) + ' / $',
-               'ethbtc': u'\u039E' + str(1 / data['data']['price']['btc']) + ' / ' + u'\u0243',
-               }.get(self.EXCHANGE, str(9)) 
-
-        self.ind.set_label(dataOut)
-
-    def getEtherChainData(self):
         try :
-            r = requests.get("https://etherchain.org/api/basic_stats", verify=True)
-            print r.json()['data']['price']['usd']
+            r = requests.get("https://etherchain.org/api/basic_stats", 
+                             verify=True)
+            data = r.json()
+            print r.json()['data']['price']['usd']            
         except requests.exceptions.RequestException as e:
             print e
 
-        return r.json()
+        return data
 
+    #
+    # Output data to the top indicator bar.
+    # This is just the currency price, not the block information.
+    #
+    def set_price_data(self, data):
+        output = {
+           'usdeth': '$ ' + str(data['usd']),
+           'btceth': u'\u0243' + str(data['btc']),
+           'ethusd': u'\u039E' + str(1 / data['usd']) + ' / $',
+           'ethbtc': u'\u039E' + str(1 / data['btc']) + ' / ' + u'\u0243',
+        }.get(self.EXCHANGE, "Bad converstion") 
+
+        return output    
+
+    #
+    # Add the information about the latest block to the drop-down menu.
+    # This data doesn't form any selectable menu items.
+    #
+    def set_block_data(self, data):
+
+        return True
+
+
+    def set_user_output(self):
+        # Get the data.
+        data = self.get_api_data()
+        
+        # Output the currency data to the indicator bar.
+        if data == BAD_RETRIEVE or data["status"] != 1:
+            output = "Temp Down"
+        else:
+            output = self.set_price_data(data['data']['price'])
+        self.ind.set_label(output)
+
+        # Add the block data to the menu.
+        if data == BAD_RETRIEVE or data["status"] != 1:
+            self.set_block_data(data)
+
+        return True
 
     #############################################
     ##########Settings###File####################
     #############################################
 	# grab settings from file
-    def initFromFile(self):
+    def init_from_file(self):
         try:
             with open(SETTINGSFILE): pass
         except IOError:
             print 'Need to make new file.'
             file = open(SETTINGSFILE, 'w')
             file.write(os.getcwd()+'\n')
-            file.write('10 \n')
+            file.write('3 \n')
             file.close()
         f = open(SETTINGSFILE, 'r')
         lines = f.readlines()
         currDir = (lines[0].strip())
         if ".local/share/applications" not in currDir:
-            self.setAppDir(currDir)
+            self.set_app_dir    (currDir)
         print "App Directory : " + self.APPDIR
         print "Refresh rate:",int(lines[1]),"seconds"
-        self.PING_FREQUENCY = int(lines[1])
+        self.refresh_frequency = int(lines[1])
 #        self.EXCHANGE = str(lines[2])
         f.close()
 
-    def setAppDir(self,currDir):
-        self.ETHERICON = os.path.abspath(currDir+"/res/ethericon.png")
+    def set_app_dir(self,currDir):
+        self.ICON = os.path.abspath(currDir+"/res/ethericon.png")
         self.APPDIR = currDir
 
 	# save settings at quit and kill indicator
@@ -190,7 +235,7 @@ class EtherPriceIndicator:
             print 'Saving Last State.'
             file = open(SETTINGSFILE, 'w')
             file.write(str(self.APPDIR) + '\n')
-            file.write(str(self.PING_FREQUENCY) + '\n')
+            file.write(str(self.refresh_frequency) + '\n')
             file.write(str(self.EXCHANGE) + '\n')
             file.close()
         except IOError:
