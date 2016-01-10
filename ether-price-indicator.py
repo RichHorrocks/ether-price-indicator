@@ -85,11 +85,8 @@ class EtherPriceIndicator:
         gtk.timeout_add(self.refresh_frequency * 1000, self.init_callback)
         gtk.main()
 
-
-    #
-    # Create the drop-down GTK menu.
-    #
     def menu_setup(self):
+        """Create the drop-down GTK menu."""
         self.menu = gtk.Menu()
 
         # Add data for the latest block.
@@ -159,6 +156,7 @@ class EtherPriceIndicator:
 
 
     def menu_exchange_create(self, menuIn):
+        """Create the menu for controlling what exchange mechanism to use."""
         exchangeMenu = gtk.Menu()
         exMenu = gtk.MenuItem("Set exchange:")
         exMenu.set_submenu(exchangeMenu)
@@ -194,10 +192,10 @@ class EtherPriceIndicator:
         menuIn.append(exMenu)
 
     #
-    # Create the menu for controlling how often the data is refreshed.
     # TODO: Find some way to incorporate this into a loop.
     #
     def menu_refresh_create(self, menuIn):
+        """Create the menu for controlling how often the data is refreshed."""
         refreshmenu = gtk.Menu()
         refMenu = gtk.MenuItem("Set refresh rate:")
         refMenu.set_submenu(refreshmenu)
@@ -232,22 +230,16 @@ class EtherPriceIndicator:
         refreshmenu.show()
         menuIn.append(refMenu)
 
-    #
-    # Handle the refresh menu selection.
-    #
     def menu_refresh_response(self, newTime):
+        """Handle the refresh menu selection."""
         self.refresh_frequency = newTime
 
-    #
-    # Handle an exchange selection.
-    #
     def menu_exchange_response(self, exch):
+        """Handle an exchange selection."""
         self.exchange = exch
 
-    #
-    # Handle the quit menu selection.
-    #  
     def menu_quit_response(self, widget):
+        """Handle the quit menu selection."""
         try:
             print 'Saving Last State.'
             file = open(SETTINGS_FILE, 'w')
@@ -260,10 +252,8 @@ class EtherPriceIndicator:
         gtk.main_quit()
         sys.exit(0)
 
-    #
-    # Handle the about menu selection.
-    #  
     def menu_about_response(self, widget):
+        """Handle the about menu selection."""
         self.menu.set_sensitive(False)
         widget.set_sensitive(False)
         
@@ -293,10 +283,8 @@ class EtherPriceIndicator:
         self.menu.set_sensitive(True)
         widget.set_sensitive(True)
         
-    #
-    # Get the data by calling the external API.
-    #
     def get_api_data(self):
+        """Get the data by calling the external API."""
         data = BAD_RETRIEVE
         try :
             r = requests.get("https://etherchain.org/api/basic_stats", 
@@ -308,11 +296,8 @@ class EtherPriceIndicator:
 
         return data
 
-    #
-    # Output data to the top indicator bar.
-    # This is just the currency price, not the block information.    
-    #
     def set_price_data(self, data):
+        """Output data to the top indicator bar."""
         print self.exchange
         output = {
            'usdeth': '$ ' + str(data['usd']),
@@ -324,12 +309,13 @@ class EtherPriceIndicator:
         return output    
 
     #
-    # Add the information about the latest block to the drop-down menu.
-    # This data doesn't form any selectable menu items.
     # TODO: Add some post-processing to the numbers being output. For example,
     #       limit to a certain number of significant figures.
     #
     def set_block_data(self, data):
+        """Add the information about the latest block to the drop-down menu.
+        This data doesn't form any selectable menu items.
+        """
         print data['number']
         self.block_dict["Block"] = data['number']
         self.block_dict["Timestamp"] = data['time']
@@ -338,11 +324,11 @@ class EtherPriceIndicator:
         self.block_dict["Blocktime"] = data['blockTime']
 
     #
-    # Parent function to create user output.
     # TODO: Add caching to allow output to be updated without waiting until
     # the next API poll.
     #
     def set_user_output(self):
+        """Create user output."""
         # Get the data.
         data = self.get_api_data()
         
@@ -353,7 +339,6 @@ class EtherPriceIndicator:
             output = self.set_price_data(data['data']['price'])
             self.set_block_data(data['data']['blockCount'])
         self.ind.set_label(output)             
-
 
 if __name__ == "__main__":
     indicator = EtherPriceIndicator()
