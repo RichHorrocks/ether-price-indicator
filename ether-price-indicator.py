@@ -32,6 +32,12 @@ class EtherPriceIndicator:
                    "Gas": 0,
                    "Blocktime": 0 }
 
+    # A dictionary representing the available price converstions.
+    price_dict = { "usdeth": "None",
+                   "btceth": "None",
+                   "ethusd": "None",
+                   "ethbtc": "None" }
+
     # Global variables for setting values in sub-menus.
     refresh_frequency = 3
     exchange = 'usdeth'
@@ -237,6 +243,9 @@ class EtherPriceIndicator:
     def menu_exchange_response(self, exch):
         """Handle an exchange selection."""
         self.exchange = exch
+        output = self.set_price_data_user()
+        print output
+        self.ind.set_label(output)             
 
     def menu_quit_response(self, widget):
         """Handle the quit menu selection."""
@@ -296,17 +305,31 @@ class EtherPriceIndicator:
 
         return data
 
-    def set_price_data(self, data):
-        """Output data to the top indicator bar."""
-        print self.exchange
+    def set_price_data_user(self):
+        """Output the price data to the user."""
         output = {
-           'usdeth': '$ ' + str(data['usd']),
-           'btceth': u'\u0243' + str(data['btc']),
-           'ethusd': u'\u039E' + str(1 / data['usd']) + ' / $',
-           'ethbtc': u'\u039E' + str(1 / data['btc']) + ' / ' + u'\u0243',
+           'usdeth': self.price_dict['usdeth'],
+           'btceth': self.price_dict['btceth'],
+           'ethusd': self.price_dict['ethusd'],
+           'ethbtc': self.price_dict['ethbtc']
         }.get(self.exchange, "Bad conversion") 
 
-        return output    
+        return output       
+
+    def set_price_data(self, data):
+        """Cache the price data in a dictionary."""
+        print self.exchange
+
+        # Calculate and cache the current price conversions.
+        # Note that we're rounding to 4 d.p.
+        self.price_dict['usdeth'] = '$ ' + "{0:.4f}".format(data['usd'])
+        self.price_dict['btceth'] = u'\u0243' + "{0:.4f}".format(data['btc'])
+        self.price_dict['ethusd'] = u'\u039E' + \
+                                    "{0:.4f}".format(1 / data['usd']) + ' / $'
+        self.price_dict['ethbtc'] = u'\u039E' + \
+                                    "{0:.4f}".format(1 / data['btc']) + \
+                                    ' / ' + u'\u0243'
+
 
     #
     # TODO: Add some post-processing to the numbers being output. For example,
@@ -336,7 +359,8 @@ class EtherPriceIndicator:
         if data == BAD_RETRIEVE or data["status"] != 1:
             output = "Temp Down"
         else:
-            output = self.set_price_data(data['data']['price'])
+            self.set_price_data(data['data']['price'])
+            output = self.set_price_data_user()
             self.set_block_data(data['data']['blockCount'])
         self.ind.set_label(output)             
 
