@@ -12,6 +12,7 @@ import cryptography
 import pyasn1
 import json
 import os
+import time
 from ndg import httpsclient
 from os.path import expanduser
 
@@ -91,12 +92,17 @@ class EtherPriceIndicator:
         gtk.timeout_add(self.refresh_frequency * 1000, self.init_callback)
         gtk.main()
 
+    def menu_setup_add_separator(self, menu):
+        separator = gtk.SeparatorMenuItem()
+        separator.show()
+        self.menu.append(separator)
+
     def menu_setup(self):
         """Create the drop-down GTK menu."""
         self.menu = gtk.Menu()
 
         # Add data for the latest block.
-        self.block_item = gtk.MenuItem("Last block:")
+        self.block_item = gtk.MenuItem("Last block we know about:")
         self.block_item.show()
         self.menu.append(self.block_item)
 
@@ -104,6 +110,15 @@ class EtherPriceIndicator:
             item = gtk.MenuItem("    " + key + ":  " + str(value))
             item.show()
             self.menu.append(item)
+
+        separator = gtk.SeparatorMenuItem()
+        separator.show()
+        self.menu.append(separator)
+
+        self.update = gtk.MenuItem("Update block data...") 
+        self.update.connect("activate", self.menu_update_response)
+        self.update.show()
+        self.menu.append(self.update)
 
         separator = gtk.SeparatorMenuItem()
         separator.show()
@@ -118,7 +133,7 @@ class EtherPriceIndicator:
         separator = gtk.SeparatorMenuItem()
         separator.show()
         self.menu.append(separator)
-        
+
         # Add general munu options at the bottom.
         self.about = gtk.MenuItem("About") 
         self.about.connect("activate", self.menu_about_response)
@@ -133,34 +148,9 @@ class EtherPriceIndicator:
 
         return True
 
-    
     #
-    # Create the menu for controlling what exchange mechanism to use.
     # TODO: Find some way to incorporate this into a loop.
     #
-#    def set_exchange_menu(self, menuIn):
-#        sub_menu = gtk.Menu()
-#        par_menu = gtk.MenuItem("Set exchange:")
-#        par_menu.set_submenu(sub_menu)
-
-#        sub_group = None
-#        values = [("usdeth", "USD / ETH"), 
-#                  ("btceth", "BTC / ETH"), 
-#                  ("ethusd", "ETH / USD"), 
-#                  ("ethbtc", "ETH / BTC")]
-
- #       for a, b in values:
-#            sub_item = gtk.RadioMenuItem(sub_group, b); 
-#            sub_item.connect("activate",lambda x: self.set_exchange(a)); 
-#            sub_item.show()
-#            sub_group = sub_item   
-#            sub_menu.append(sub_item)
-
-#        par_menu.show() 
-#        sub_menu.show()
-#        menuIn.append(par_menu)
-
-
     def menu_exchange_create(self, menuIn):
         """Create the menu for controlling what exchange mechanism to use."""
         exchangeMenu = gtk.Menu()
@@ -172,21 +162,29 @@ class EtherPriceIndicator:
         menuUSDETH.connect("activate", 
                            lambda x: self.menu_exchange_response("usdeth")); 
         menuUSDETH.show()        
+        if (self.exchange == "usdeth"):
+            menuUSDETH.set_active(True)
         self.ETHtickers = menuUSDETH;
         menuBTCETH = gtk.RadioMenuItem(self.ETHtickers,"BTC / ETH"); 
         menuBTCETH.connect("activate", 
                            lambda x: self.menu_exchange_response("btceth")); 
         menuBTCETH.show()
+        if (self.exchange == "btceth"):
+            menuBTCETH.set_active(True)
         self.ETHtickers = menuBTCETH;
         menuETHUSD = gtk.RadioMenuItem(self.ETHtickers,"ETH / USD"); 
         menuETHUSD.connect("activate", 
                            lambda x: self.menu_exchange_response("ethusd")); 
         menuETHUSD.show()
+        if (self.exchange == "ethusd"):
+            menuETHUSD.set_active(True)
         self.ETHtickers = menuETHUSD;
         menuETHBTC = gtk.RadioMenuItem(self.ETHtickers,"ETH / BTC"); 
         menuETHBTC.connect("activate", 
                            lambda x: self.menu_exchange_response("ethbtc")); 
         menuETHBTC.show()
+        if (self.exchange == "ethbtc"):
+            menuETHBTC.set_active(True)
         self.ETHtickers = menuETHBTC;
 
         exchangeMenu.append(menuUSDETH);
@@ -211,21 +209,29 @@ class EtherPriceIndicator:
         menuRefresh1.connect("activate",
                              lambda x: self.menu_refresh_response(30)); 
         menuRefresh1.show()
+        if (self.refresh_frequency == 30):
+            menuRefresh1.set_active(True)
         self.refreshRates = menuRefresh1
         menuRefresh2 = gtk.RadioMenuItem(self.refreshRates,"1m"); 
         menuRefresh2.connect("activate",
                              lambda x: self.menu_refresh_response(60)); 
         menuRefresh2.show()
+        if (self.refresh_frequency == 60):
+            menuRefresh2.set_active(True)
         self.refreshRates = menuRefresh2
         menuRefresh3 = gtk.RadioMenuItem(self.refreshRates,"5m"); 
         menuRefresh3.connect("activate",
                              lambda x: self.menu_refresh_response(300)); 
         menuRefresh3.show()
+        if (self.refresh_frequency == 300):
+            menuRefresh3.set_active(True)
         self.refreshRates = menuRefresh3
         menuRefresh4 = gtk.RadioMenuItem(self.refreshRates,"10m"); 
         menuRefresh4.connect("activate",
                              lambda x: self.menu_refresh_response(600)); 
         menuRefresh4.show()
+        if (self.refresh_frequency == 600):
+            menuRefresh4.set_active(True)
         self.refreshRates = menuRefresh4
 
         refreshmenu.append(menuRefresh1)
@@ -234,17 +240,23 @@ class EtherPriceIndicator:
         refreshmenu.append(menuRefresh4)
         refMenu.show() 
         refreshmenu.show()
-        menuIn.append(refMenu)
+        menuIn.append(refMenu)    
+
+    def menu_update_response(self, widget):
+        """Handle the update menu selection."""
+        print "Updating block data"
+        self.init_callback()
 
     def menu_refresh_response(self, newTime):
         """Handle the refresh menu selection."""
+        print "Setting refresh to " + str(newTime)
         self.refresh_frequency = newTime
 
     def menu_exchange_response(self, exch):
         """Handle an exchange selection."""
+        print "Setting exchange to", exch
         self.exchange = exch
         output = self.set_price_data_user()
-        print output
         self.ind.set_label(output)             
 
     def menu_quit_response(self, widget):
@@ -341,7 +353,8 @@ class EtherPriceIndicator:
         """
         print data['number']
         self.block_dict["Block"] = data['number']
-        self.block_dict["Timestamp"] = data['time']
+        t = time.strptime(data['time'], "%Y-%m-%dT%H:%M:%S.000Z")
+        self.block_dict["Timestamp"] = time.asctime(t)
         self.block_dict["Difficulty"] = data['difficulty']
         self.block_dict["Gas"] = data['gasUsed']
         self.block_dict["Blocktime"] = data['blockTime']
