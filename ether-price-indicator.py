@@ -13,6 +13,7 @@ import pyasn1
 import json
 import os
 import time
+import datetime
 from ndg import httpsclient
 from os.path import expanduser
 
@@ -43,10 +44,8 @@ class EtherPriceIndicator:
     refresh_frequency = 3
     exchange = 'usdeth'
 
-    #
-    # Initialisation and callback functions.
-    #
     def __init__(self):
+        """Initialise."""
         self.init_from_file()
         self.ind = appindicator.Indicator(
             "ether-indicator", 
@@ -55,6 +54,7 @@ class EtherPriceIndicator:
         self.ind.set_status(appindicator.STATUS_ACTIVE)
 
     def init_callback(self):
+        """Call-back whenever the timer tells us to."""
         self.set_user_output()
         self.menu_setup()
 
@@ -62,13 +62,14 @@ class EtherPriceIndicator:
         return True
 
     def init_from_file(self):
+        """Initialise from the settings file, if it exists."""
         try:
             with open(SETTINGS_FILE): pass
         except IOError:
-            print 'Need to make new file.'
+            self.create_log("Need to make new file.")
             file = open(SETTINGS_FILE, 'w')
             file.write(os.getcwd() + '\n')
-            file.write('10\n')
+            file.write('30\n')
             file.write('usdeth')
             file.close()
         f = open(SETTINGS_FILE, 'r')
@@ -84,15 +85,18 @@ class EtherPriceIndicator:
         f.close()
 
     def set_app_dir(self, currDir):
+        """Set the directory where the application is stored."""
         self.ICON_FILE = os.path.abspath(currDir + "/res/ether_icon.png")
         self.APP_DIR = currDir
 
     def main(self):
+        """Kick things off."""
         self.init_callback()
         gtk.timeout_add(self.refresh_frequency * 1000, self.init_callback)
         gtk.main()
 
     def menu_setup_add_separator(self, menu):
+        """Create a menu separator."""
         separator = gtk.SeparatorMenuItem()
         separator.show()
         self.menu.append(separator)
@@ -243,18 +247,18 @@ class EtherPriceIndicator:
         menuIn.append(refMenu)    
 
     def menu_update_response(self, widget):
-        """Handle the update menu selection."""
-        print "Updating block data"
+        """Handle the update menu selection."""        
+        self.create_log("Updating block data")
         self.init_callback()
 
     def menu_refresh_response(self, newTime):
         """Handle the refresh menu selection."""
-        print "Setting refresh to " + str(newTime)
+        self.create_log("Setting refresh to " + str(newTime))
         self.refresh_frequency = newTime
 
     def menu_exchange_response(self, exch):
         """Handle an exchange selection."""
-        print "Setting exchange to", exch
+        self.create_log("Setting exchange to " + exch)
         self.exchange = exch
         output = self.set_price_data_user()
         self.ind.set_label(output)             
@@ -262,14 +266,14 @@ class EtherPriceIndicator:
     def menu_quit_response(self, widget):
         """Handle the quit menu selection."""
         try:
-            print 'Saving Last State.'
+            self.create_log("Saving Last State.")
             file = open(SETTINGS_FILE, 'w')
             file.write(str(self.APP_DIR) + '\n')
             file.write(str(self.refresh_frequency) + '\n')
             file.write(str(self.exchange))
             file.close()
         except IOError:
-            print " ERROR WRITING QUIT STATE"
+            self.create_log("ERROR WRITING QUIT STATE")
         gtk.main_quit()
         sys.exit(0)
 
@@ -310,8 +314,7 @@ class EtherPriceIndicator:
         try :
             r = requests.get("https://etherchain.org/api/basic_stats", 
                              verify=True)
-            data = r.json()
-            #print r.json()['data']['price']['usd']            
+            data = r.json()            
         except requests.exceptions.RequestException as e:
             print e
 
@@ -330,7 +333,6 @@ class EtherPriceIndicator:
 
     def set_price_data(self, data):
         """Cache the price data in a dictionary."""
-        print self.exchange
 
         # Calculate and cache the current price conversions.
         # Note that we're rounding to 4 d.p.
@@ -342,16 +344,10 @@ class EtherPriceIndicator:
                                     "{0:.4f}".format(1 / data['btc']) + \
                                     ' / ' + u'\u0243'
 
-
-    #
-    # TODO: Add some post-processing to the numbers being output. For example,
-    #       limit to a certain number of significant figures.
-    #
     def set_block_data(self, data):
         """Add the information about the latest block to the drop-down menu.
         This data doesn't form any selectable menu items.
         """
-        print data['number']
         self.block_dict["Block"] = data['number']
         t = time.strptime(data['time'], "%Y-%m-%dT%H:%M:%S.000Z")
         self.block_dict["Timestamp"] = time.asctime(t)
@@ -359,10 +355,6 @@ class EtherPriceIndicator:
         self.block_dict["Gas"] = data['gasUsed']
         self.block_dict["Blocktime"] = data['blockTime']
 
-    #
-    # TODO: Add caching to allow output to be updated without waiting until
-    # the next API poll.
-    #
     def set_user_output(self):
         """Create user output."""
         # Get the data.
@@ -376,6 +368,9 @@ class EtherPriceIndicator:
             output = self.set_price_data_user()
             self.set_block_data(data['data']['blockCount'])
         self.ind.set_label(output)             
+
+    def create_log(self, str):
+        print "{:%Y-%m-%d %H:%M:%S} - ".format(datetime.datetime.now()) + str
 
 if __name__ == "__main__":
     indicator = EtherPriceIndicator()
