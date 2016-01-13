@@ -71,7 +71,7 @@ else:
         dirIn = os.path.abspath(dirIn)
         print "Setup from:",dirIn
 
-        iconTemp = dirIn+"/res/ethericon.png"
+        iconTemp = dirIn+"/res/ether_icon.png"
         indTemp = dirIn+"/ether-price-indicator.py"
         deskTemp = dirIn+"/ether-price-indicator.desktop"
         settingsTemp = dirIn+"/res/settingsEtherIndicator.dat"
@@ -86,29 +86,25 @@ else:
         if not os.path.exists(HOME+"/.local/share/applications/"):
             subprocess.call(["mkdir", HOME+"/.local/share/applications/"])
             print "Making folder:",HOME+"/.local/share/applications/"
-
-        #Try moving btc icon
+        
         try:
-            shutil.copyfile(iconTemp,ICON)
-            print 'Moving btc icon to',ICON
+            shutil.copyfile(iconTemp, ICON)
+            print 'Moving btc icon to', ICON
         except IOError:
             print 'Error moving btc icon.'
 
-        #Try moving indicator
         try:
             shutil.copyfile(indTemp,INDICATORFILE)
             print 'Moving application to',INDICATORFILE
         except IOError:
             print 'Error moving application.'
 
-    #Try moving indicator desktop file
     try:
         shutil.copyfile(deskTemp,DESKTOPFILE)
         print 'Moving application desktop file to',DESKTOPFILE
     except IOError:
         print 'Error moving application desktop file.'
 
-    #Ask to move file to startup
     if 'y' in raw_input("Run on startup? [Y/n] ").lower().strip():
         if not os.path.exists(HOME+"/.config/autostart/"):
             subprocess.call(["mkdir", HOME+"/.config/autostart/"])
@@ -135,7 +131,6 @@ else:
         file.close()
     except IOError:
         print "IO ERROR"
-
 
     makeAlias = str(raw_input( "Make indicator alias for terminal? [y/N]"))
     if "y" in makeAlias:
