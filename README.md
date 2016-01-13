@@ -19,6 +19,5 @@ The currency conversions available are:
 
 #### Donations are welcome!
 
-BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
-
-ETH: 0x581ebac13606b1583226984f234252e561e0fa14
+ * BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
+ * ETH: 0x581ebac13606b1583226984f234252e561e0fa14
