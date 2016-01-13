@@ -1,5 +1,4 @@
-Ether-Price-Indicator
-==========
+## Ether-Price-Indicator
 
 [Based on Crypto-Price-Indicator by jjb]
 
@@ -14,7 +13,12 @@ The currency conversions available are:
  * Bitcoins, in ETH
  * US dollars, in ETH
 
-Donations are welcome!
+### Screenshots
+
+![ScreenShot](screenie1.png)
+![ScreenShot](screenie2.png)
+
+#### Donations are welcome!
 
 BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
-ETH: To come...
+ETH: 0x581ebac13606b1583226984f234252e561e0fa14
