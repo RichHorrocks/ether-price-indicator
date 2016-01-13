@@ -15,10 +15,10 @@ The currency conversions available are:
 
 ### Screenshots
 
-![ScreenShot](screenie1.png)
-![ScreenShot](screenie2.png)
+![ScreenShot](screenie2.png) ![ScreenShot](screenie1.png)
 
 #### Donations are welcome!
 
 BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
+
 ETH: 0x581ebac13606b1583226984f234252e561e0fa14
