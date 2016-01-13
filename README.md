@@ -14,8 +14,10 @@ The currency conversions available are:
  * US dollars, in ETH
 
 ### Screenshots
-
-![ScreenShot](screenie2.png) ![ScreenShot](screenie1.png)
+#### Bar
+![ScreenShot](screenie1.png)
+#### Menu
+![ScreenShot](screenie2.png) 
 
 #### Donations are welcome!
 
