@@ -13,6 +13,11 @@ The currency conversions available are:
  * Bitcoins, in ETH
  * US dollars, in ETH
 
+### Setup
+Run `python setup.py` and follow the instructions that are presented.
+
+Requires Python and the `pip` installer to be installed. 
+
 ### Screenshots
 #### Bar
 ![ScreenShot](screenie1.png)
