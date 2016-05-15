@@ -26,5 +26,5 @@ Requires Python and the `pip` installer to be installed.
 
 #### Donations are welcome!
 
- * BTC: 1HCAo4UeQjQrtxCBUzatYxzt8u1UyafPi5
- * ETH: 0x581ebac13606b1583226984f234252e561e0fa14
+ * BTC: 3JoKZh6D73TwzrP1Q4YtV22YGEem9gykWW
+ * ETH: 0x32a294c14d425B14A40Df771a977543Ca94cB05E
